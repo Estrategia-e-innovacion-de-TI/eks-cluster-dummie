@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-logger-app
+  labels:
+    app: sample-logger
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-logger
+  template:
+    metadata:
+      labels:
+        app: sample-logger
+    spec:
+      containers:
+      - name: logger
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          COUNTER=1
+          while true; do
+            echo "$(date): Sample log message from pod $HOSTNAME - Counter: $COUNTER"
+            echo "$(date): Application health check - Status: OK"
+            echo "$(date): Random number: $RANDOM"
+            echo "$(date): Memory usage: $(free -h | grep ^Mem | awk '{print $3}')"
+            sleep 10
+            COUNTER=$((COUNTER + 1))
+          done
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-logger-service
+spec:
+  selector:
+    app: sample-logger
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: ClusterIP
