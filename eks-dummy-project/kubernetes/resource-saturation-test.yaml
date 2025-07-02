@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-saturation-test
+  namespace: default
+  labels:
+    app: nginx-saturation-test
+spec:
+  replicas: 5  # Múltiples réplicas para saturar el cluster
+  selector:
+    matchLabels:
+      app: nginx-saturation-test
+  template:
+    metadata:
+      labels:
+        app: nginx-saturation-test
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 800m      # Solicita mucha CPU
+            memory: 512Mi  # Solicita mucha memoria
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /noexiste  # Siempre falla - simula problema de configuración
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      - name: resource-hog
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+          - |
+            echo "🚀 Iniciando consumo progresivo de recursos..."
+            echo "⏳ Esperando 30 segundos antes de empezar..."
+            sleep 30
+            
+            echo "🔥 Iniciando consumo de CPU y memoria..."
+            
+            # Función para consumir CPU
+            consume_cpu() {
+              while true; do
+                echo "Consumiendo CPU..."
+                dd if=/dev/zero of=/dev/null bs=1M count=100 &
+                sleep 2
+              done
+            }
+            
+            # Función para consumir memoria
+            consume_memory() {
+              mem_counter=1
+              while true; do
+                echo "Consumiendo memoria: bloque $mem_counter"
+                dd if=/dev/zero of=/tmp/memory_hog_$mem_counter bs=1M count=50
+                mem_counter=$((mem_counter + 1))
+                sleep 10
+              done
+            }
+            
+            # Ejecutar ambos procesos en paralelo
+            consume_cpu &
+            consume_memory &
+            
+            # Mantener el contenedor vivo
+            wait
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-saturation-service
+  namespace: default
+spec:
+  selector:
+    app: nginx-saturation-test
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: saturation-test-config
+  namespace: default
+data:
+  test_mode: "saturation"
+  description: "Test para simular saturación de recursos en EKS"
+  expected_behavior: "Pods en Running pero no Ready, posible saturación de recursos" 

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-limit-error
+  labels:
+    app: resource-limit-error
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: resource-limit-error
+  template:
+    metadata:
+      labels:
+        app: resource-limit-error
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        resources:
+          requests:
+            cpu: "32"
+            memory: "128Gi"
+          limits:
+            cpu: "32"
+            memory: "128Gi" 

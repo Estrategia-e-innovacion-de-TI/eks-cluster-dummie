@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: readiness-probe-test
+  labels:
+    name: readiness-probe-test
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: readiness-probe-app
+  namespace: readiness-probe-test
+  labels:
+    app: readiness-probe-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: readiness-probe-app
+  template:
+    metadata:
+      labels:
+        app: readiness-probe-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:1.25
+        ports:
+        - containerPort: 80
+        # Readiness probe mal configurado --> apunta a un puerto que no existe
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080  # ❌ Puerto incorrecto --> nginx corre en puerto 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Liveness probe normal --> para mantener el pod corriendo
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: readiness-probe-service
+  namespace: readiness-probe-test
+spec:
+  selector:
+    app: readiness-probe-app
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP 

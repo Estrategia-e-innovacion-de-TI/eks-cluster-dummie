@@ -1,0 +1,190 @@
+# =============================================================================
+# EKS Dummy Test Project - .gitignore
+# =============================================================================
+
+# =============================================================================
+# ENVIRONMENT FILES
+# =============================================================================
+.env
+.env.local
+.env.*.local
+
+# =============================================================================
+# TERRAFORM FILES
+# =============================================================================
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data
+*.tfvars
+*.tfvars.json
+
+# Ignore override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include tfplan files to ignore the plan output
+*.tfplan
+*.tfplan.*
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# =============================================================================
+# KUBERNETES FILES
+# =============================================================================
+# Kubeconfig files
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+
+# Kubernetes secrets and sensitive data
+*-secret.yaml
+*-secrets.yaml
+*secret*.yaml
+*secrets*.yaml
+
+# =============================================================================
+# AWS FILES
+# =============================================================================
+# AWS credentials
+.aws/
+aws-credentials
+aws-credentials.*
+
+# AWS CLI cache
+.aws-cli/
+
+# =============================================================================
+# LOG FILES
+# =============================================================================
+*.log
+logs/
+*.out
+*.err
+
+# =============================================================================
+# TEMPORARY FILES
+# =============================================================================
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# =============================================================================
+# OS GENERATED FILES
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =============================================================================
+# EDITOR FILES
+# =============================================================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# =============================================================================
+# MONITORING AND DEBUG FILES
+# =============================================================================
+# CloudWatch logs (if downloaded locally)
+cloudwatch-logs/
+*.cwlogs
+
+# Monitoring data
+monitoring-data/
+metrics-data/
+
+# Debug files
+debug/
+*.debug
+
+# =============================================================================
+# TEST FILES
+# =============================================================================
+# Test outputs
+test-results/
+test-output/
+*.test.log
+
+# =============================================================================
+# SECURITY FILES
+# =============================================================================
+# SSH keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Certificates
+*.crt
+*.cert
+*.pem
+
+# =============================================================================
+# BACKUP AND ARCHIVE FILES
+# =============================================================================
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# =============================================================================
+# PROJECT SPECIFIC
+# =============================================================================
+# EKS cluster state (if stored locally)
+eks-state/
+cluster-state/
+
+# Terraform outputs that might contain sensitive data
+terraform-outputs/
+*.output
+
+# Local development files
+local-dev/
+dev-config/ 

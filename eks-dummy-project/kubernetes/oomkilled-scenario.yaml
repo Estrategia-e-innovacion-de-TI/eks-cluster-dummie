@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oomkilled-test
+  labels:
+    app: oomkilled-test
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: oomkilled-test
+  template:
+    metadata:
+      labels:
+        app: oomkilled-test
+    spec:
+      containers:
+      - name: memory-hog
+        image: python:3.9-slim
+        command: ['python', '-c']
+        args:
+          - |
+            import time
+            import sys
+            
+            print("🚀 Iniciando test de OOMKilled...")
+            print("📊 Límite de memoria configurado: 50Mi")
+            print("🔥 Consumiendo memoria progresivamente...")
+            
+            # Lista para almacenar bloques de memoria
+            memory_blocks = []
+            block_size = 1024 * 1024  # 1MB por bloque
+            block_count = 0
+            
+            try:
+                while True:
+                    # Crear un bloque de memoria de 1MB
+                    block = bytearray(block_size)
+                    memory_blocks.append(block)
+                    block_count += 1
+                    
+                    # Mostrar progreso cada 5 bloques
+                    if block_count % 5 == 0:
+                        print(f"📦 Bloque #{block_count}: {block_count}MB consumidos")
+                    
+                    # Pequeña pausa para hacer el consumo más visible
+                    time.sleep(0.1)
+                    
+            except MemoryError:
+                print("💥 MemoryError capturado - límite de memoria alcanzado")
+                sys.exit(1)
+            except Exception as e:
+                print(f"❌ Error inesperado: {e}")
+                sys.exit(1)
+        resources:
+          requests:
+            cpu: 50m
+            memory: 25Mi
+          limits:
+            cpu: 100m
+            memory: 50Mi  # Límite muy bajo para garantizar OOMKilled
+        livenessProbe:
+          exec:
+            command: ['python', '-c', 'import sys; sys.exit(0)']
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command: ['python', '-c', 'import sys; sys.exit(0)']
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oomkilled-test-service
+spec:
+  selector:
+    app: oomkilled-test
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oomkilled-test-config
+data:
+  scenario_type: "oomkilled_test"
+  description: "Test específico para simular OOMKilled errors"
+  expected_behavior: "Pods deberían ser terminados por OOMKilled"
+  memory_limit: "50Mi"
+  replicas: "3" 

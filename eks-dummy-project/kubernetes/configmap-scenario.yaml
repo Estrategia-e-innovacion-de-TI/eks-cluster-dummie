@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: configmap-test
+  labels:
+    name: configmap-test
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: configmap-test
+data:
+  # Configuración crítica que la aplicación necesita
+  DATABASE_URL: "postgresql://user:password@db.example.com:5432/mydb"
+  API_KEY: "super-secret-api-key-12345"
+  LOG_LEVEL: "INFO"
+  FEATURE_FLAG_ENABLED: "true"
+  MAX_CONNECTIONS: "100"
+  TIMEOUT_SECONDS: "30"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-dependent-app
+  namespace: configmap-test
+  labels:
+    app: config-dependent-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: config-dependent-app
+  template:
+    metadata:
+      labels:
+        app: config-dependent-app
+    spec:
+      containers:
+      - name: app
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          # Verificar que todas las variables de configuración estén presentes
+          echo "Starting application..."
+          echo "Checking required configuration..."
+          
+          # Verificar variables críticas
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is not set!"
+            exit 1
+          fi
+          
+          if [ -z "$API_KEY" ]; then
+            echo "ERROR: API_KEY is not set!"
+            exit 1
+          fi
+          
+          if [ -z "$LOG_LEVEL" ]; then
+            echo "ERROR: LOG_LEVEL is not set!"
+            exit 1
+          fi
+          
+          echo "Configuration validation passed"
+          echo "DATABASE_URL: $DATABASE_URL"
+          echo "API_KEY: ${API_KEY:0:10}..." # Solo mostrar primeros 10 caracteres
+          echo "LOG_LEVEL: $LOG_LEVEL"
+          echo "FEATURE_FLAG_ENABLED: $FEATURE_FLAG_ENABLED"
+          echo "MAX_CONNECTIONS: $MAX_CONNECTIONS"
+          echo "TIMEOUT_SECONDS: $TIMEOUT_SECONDS"
+          
+          # Simular aplicación funcionando
+          COUNTER=1
+          while true; do
+            echo "$(date): Application running normally - Counter: $COUNTER"
+            echo "$(date): Database connection: OK"
+            echo "$(date): API calls: SUCCESS"
+            echo "$(date): Memory usage: $(free -h | grep ^Mem | awk '{print $3}')"
+            sleep 15
+            COUNTER=$((COUNTER + 1))
+          done
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DATABASE_URL
+        - name: API_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: API_KEY
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: LOG_LEVEL
+        - name: FEATURE_FLAG_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FEATURE_FLAG_ENABLED
+        - name: MAX_CONNECTIONS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: MAX_CONNECTIONS
+        - name: TIMEOUT_SECONDS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: TIMEOUT_SECONDS
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi 
